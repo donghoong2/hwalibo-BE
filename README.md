@@ -86,15 +86,7 @@
 | **Database** | MySQL 8.0 (Transaction), Redis (Cache, Refresh Token, Blacklist) |
 | **Infra & DevOps** | AWS EC2, S3, GitHub Actions, Docker |
 | **External API** | Google Cloud Vision API (이미지 검수) |
-| **Tools** | GitHub, Notion, Postman, Swagger |
-
-<br/>
-
-## 🏛️ 아키텍처
-
-<div align="center">
-  <img src="./assets/architecture.png" alt="Architecture Diagram" width="80%" />
-</div>
+| **Tools** | GitHub, Notion, Swagger |
 
 <br/>
 
@@ -117,6 +109,13 @@
 * **문제**: S3 업로드 성공 후 DB 저장 실패 시 '고아 파일' 발생 문제.
 * **해결**: 예외 발생 시 업로드된 S3 파일을 즉시 삭제하는 **보상 트랜잭션 로직** 구현.
 
+### 5.Swagger 환경에서 Multipart/Json 파싱 문제
+* **문제**: 리뷰 작성/수정 시 이미지(`MultipartFile`)와 DTO 객체를 함께 전송해야 했으나, Swagger에서 DTO를 `application/json`으로 인식하지 못하고 String으로 처리하여 `415 Unsupported Media Type` 오류 발생.
+* **해결**:
+    * Controller에서 DTO를 `@RequestPart` 대신 **`@RequestParam("dto") String`** 으로 받도록 변경.
+    * **`ObjectMapper`**를 사용하여 JSON 문자열을 Java 객체로 수동 역직렬화(Deserialization)하는 로직을 적용.
+* **성과**: Swagger 및 다양한 클라이언트 환경에서의 요청 호환성을 완벽하게 확보.
+
 <br/>
 
 ## 🌟 기대 효과
@@ -130,15 +129,14 @@
 
 | Tag | Method | URI | Description |
 | :--- | :---: | :--- | :--- |
-| **Toilet** | `GET` | `/api/toilets/{toiletId}` | 화장실 상세 정보 조회 |
-| **Review** | `GET` | `/api/reviews` | 리뷰 목록 조회 (No-Offset) |
-| | `POST` | `/api/reviews` | 리뷰 작성 |
-| | `POST` | `/api/reviews/{id}/images` | 리뷰 이미지 삽입 (비동기 검수) |
-| | `PUT` | `/api/reviews/{id}/images` | 리뷰 이미지 수정 |
-| | `POST` | `/api/reviews/{id}/likes` | 리뷰 좋아요 |
-| **Photo** | `GET` | `/api/photo-reviews` | 포토 리뷰 모아보기 |
-| | `GET` | `/api/photo-reviews/{id}` | 포토 리뷰 상세보기 |
-| **Image** | `GET` | `/api/images/{id}/status` | 이미지 검증 상태 조회 |
+| **Toilet** | `GET` | `/toilet/{toiletId}` | 화장실 상세 정보 조회 |
+| **Review** | `GET` | `/toilet/{toiletId}/reviews` | 리뷰 목록 조회 (No-Offset) |
+| | `POST` | `/toilet/{toiletId}/reviews` | 리뷰 작성 |
+| | `POST` | `/toilet/{reviewId}/photos` | 리뷰 이미지 삽입 (비동기 검수) |
+| | `PATCH` | `/user/review/{reviewId}/photos` | 리뷰 이미지 수정 |
+| | `GET` | `/toilet/{toiletId}/photos` | 포토 리뷰 모아보기 |
+| | `GET` | `/toilet/{toiletId}/photos/{photoId}` | 포토 리뷰 상세보기 |
+| **Image** | `GET` | `/api/v1/reviews/{reviewId}/image-status` | 이미지 검증 상태 조회 |
 
 <br/>
 
